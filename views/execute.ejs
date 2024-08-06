@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Execute Present - DemandeAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+    <%- include('./partials.ejs') -%>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <div class="mb-8">
+            <a href="/" id="registerLink" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" >
+                Back
+            </a>
+        </div>
+        <h1 class="text-3xl font-bold mb-4">Execute Present</h1>
+        <form id="dynamicForm" class="bg-white p-4 rounded shadow mb-4">
+            <!-- Form fields will be inserted here -->
+        </form>
+        <div id="resultContainer" class="mt-4 hidden">
+            <h2 class="text-2xl font-bold mb-2">Result:</h2>
+            <pre id="result" class="p-4 bg-white rounded shadow overflow-x-auto"></pre>
+        </div>
+    </div>
+    <script>
+        const preset = <%- JSON.stringify(preset) -%>;
+        const formConfig = JSON.parse(preset.formConfig);
+        const formElement = document.getElementById('dynamicForm');
+        
+        formConfig.forEach(field => {
+            const label = document.createElement('label');
+            label.textContent = field.label;
+            label.className = 'block mb-2';
+            formElement.appendChild(label);
+
+            const input = document.createElement('input');
+            input.type = field.type;
+            input.name = field.name;
+            input.className = 'w-full p-2 border rounded mb-4';
+            formElement.appendChild(input);
+        });
+
+        const submitButton = document.createElement('button');
+        submitButton.textContent = 'Execute';
+        submitButton.type = 'submit';
+        submitButton.className = 'bg-blue-500 text-white px-4 py-2 rounded';
+        formElement.appendChild(submitButton);
+
+        formElement.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(formElement);
+            const jsonData = Object.fromEntries(formData.entries());
+            jsonData.oaik = (localStorage.oaik||"").split('$$$').join('')
+            const response = await fetch(`/execute/${preset._id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(jsonData)
+            });
+            const result = await response.json();
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = formatResult(result);
+            document.getElementById('resultContainer').classList.remove('hidden');
+        };
+
+        function formatResult(result) {
+            if (result.result) {
+                return syntaxHighlight(result.result);
+            } else {
+                return JSON.stringify(result, null, 2);
+            }
+        }
+
+        function syntaxHighlight(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                    let cls = 'text-blue-600';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'text-red-600';
+                        } else {
+                            cls = 'text-green-600';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'text-purple-600';
+                    } else if (/null/.test(match)) {
+                        cls = 'text-gray-600';
+                    }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                });
+        }
+        
+    </script>
+    
+</body>
+</html>

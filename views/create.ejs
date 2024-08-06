@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= isEditing ? 'Modifier' : 'Créer' %> Préréglage - DemandeAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4"><%= isEditing ? 'Modifier' : 'Créer' %> Préréglage</h1>
+        <form id="presetForm" class="bg-white p-4 rounded shadow">
+            <input type="text" name="label" placeholder="Label" class="w-full p-2 border rounded mb-4">
+            <textarea name="presetJson" rows="10" placeholder="JSON du préréglage" class="w-full p-2 border rounded mb-4"></textarea>
+            <textarea name="formConfig" rows="5" placeholder="Configuration du formulaire" class="w-full p-2 border rounded mb-4"></textarea>
+            <input type="text" name="messageTemplate" placeholder="Modèle de message" class="w-full p-2 border rounded mb-4">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded"><%= isEditing ? 'Mettre à jour' : 'Créer' %> Préréglage</button>
+        </form>
+    </div>
+    <%- include('./partials.ejs') -%>
+    <script>
+        const isEditing = <%= isEditing %>;
+        const presetId = '<%= isEditing ? presetId : "" %>';
+
+        async function fetchPresetData() {
+            if (isEditing) {
+                try {
+                    const response = await fetch(`/api/presets/${presetId}`);
+                    if (response.ok) {
+                        const preset = await response.json();
+                        document.querySelector('input[name="label"]').value = preset.label || '';
+                        document.querySelector('textarea[name="presetJson"]').value = preset.presetJson || '';
+                        document.querySelector('textarea[name="formConfig"]').value = preset.formConfig || '';
+                        document.querySelector('input[name="messageTemplate"]').value = preset.messageTemplate || '';
+                    } else {
+                        console.error('Échec de la récupération des données du préréglage');
+                        alert('Échec de la récupération des données du préréglage');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la récupération des données du préréglage:', error);
+                    alert('Une erreur est survenue lors de la récupération des données du préréglage');
+                }
+            }
+        }
+
+        document.getElementById('presetForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const jsonData = Object.fromEntries(formData.entries());
+            
+            const url = isEditing ? `/api/presets/${presetId}` : "/api/presets";
+            const method = isEditing ? "PUT" : "POST";
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+                
+                if (response.ok) {
+                    alert(`Préréglage ${isEditing ? 'mis à jour' : 'créé'} avec succès`);
+                    window.location.href = '/';
+                } else {
+                    const errorData = await response.json();
+                    alert(`Échec de la ${isEditing ? 'mise à jour' : 'création'} du préréglage : ${errorData.error}`);
+                }
+            } catch (error) {
+                console.error('Erreur :', error);
+                alert('Une erreur s\'est produite');
+            }
+        };
+
+        // Récupérer les données du préréglage lors du chargement de la page si en mode édition
+        fetchPresetData();
+    </script>
+</body>
+</html>

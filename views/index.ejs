@@ -1,0 +1,109 @@
+<!-- views/index.ejs -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DemandeAI - Préréglages</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <%- include('./partials.ejs') -%>
+</head>
+<body class="bg-gray-100">
+    <%- include('partials/header') %>
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Liste</h1>
+        <a href="/create" class="bg-blue-500 text-white px-4 py-2 rounded">Créer un nouveau préréglage</a>
+        <div class="mt-4">
+            <form id="apiKeyForm" class="bg-white p-4 rounded shadow mb-4">
+                <label for="openaiApiKey" class="block text-sm font-medium text-gray-700">Clé API OpenAI</label>
+                <input type="password" name="openaiApiKey" id="openaiApiKey" class="w-full p-2 border rounded mb-4">
+                <div class="mb-2">
+                    <label id="openaiApiKeySet">(Déjà défini)</label>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Enregistrer la clé API</button>
+            </form>
+            <div id="presetsContainer">
+                <!-- Les préréglages seront insérés ici dynamiquement -->
+            </div>
+        </div>
+    </div>
+    <script>
+        
+
+        // Récupérer les préréglages à l'exécution
+        async function fetchPresets() {
+            console.log('fetchPresets')
+            try {
+                const response = await fetch('/api/presets');
+                if (response.ok) {
+                    const data = await response.json();
+                    const presetsContainer = document.getElementById('presetsContainer');
+                    presetsContainer.innerHTML = ''; // Effacer les préréglages existants
+                    data.presets.forEach(preset => {
+                        const presetElement = document.createElement('div');
+                        presetElement.className = 'bg-white p-4 mb-4 rounded shadow flex justify-between items-center';
+                        presetElement.innerHTML = `
+                            <div>
+                                <h2 class="text-xl font-semibold">${preset.label || 'Sans titre'}</h2>
+                                <p>${JSON.parse(preset.presetJson).model}</p>
+                            </div>
+                            <div>
+                                <a href="/edit/${preset._id}" class="text-blue-500 mr-2">Modifier</a>
+                                <a href="/execute/${preset._id}" class="text-green-500">Exécuter</a>
+                            </div>
+                        `;
+                        presetsContainer.appendChild(presetElement);
+                    });
+                } else {
+                    console.error('Échec de la récupération des préréglages:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la récupération des préréglages:', error);
+            }
+        }
+
+        // Récupérer les préréglages lors du chargement de la page
+        fetchPresets();
+
+        // Gérer la soumission du formulaire de clé API
+        document.getElementById('apiKeyForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const jsonData = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/user/openai-key', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+
+                if (response.ok) {
+                    localStorage.oaik=btoa(jsonData.openaiApiKey)+'$$$'
+                    alert('Clé API enregistrée avec succès');
+                } else {
+                    const errorData = await response.json();
+                    alert(`Échec de l'enregistrement de la clé API : ${errorData.error}`);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            }
+        };
+
+        // Récupérer et définir la clé API OpenAI si elle existe
+        async function fetchOpenAIKey() {
+            try {
+                document.getElementById('openaiApiKey').value = localStorage.oaik ? '':''
+                openaiApiKeySet.style.display=localStorage.oaik ? 'inline-block':'none'
+            } catch (error) {
+                console.error('Erreur lors de la récupération de la clé API OpenAI:', error);
+            }
+        }
+
+        fetchOpenAIKey();
+    </script>
+</body>
+</html>

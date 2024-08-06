@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+     - .env
+    restart: unless-stopped
+    volumes:
+      - ./views:/usr/src/app/views
+      - ./models:/usr/src/app/models
+      - ./src:/usr/src/app/src
+      - ./server.js:/usr/src/app/server.js
+    ports:
+      - '3057:3000'
+  

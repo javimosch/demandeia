@@ -1,0 +1,62 @@
+<!-- views/partials/header.ejs -->
+<header class="bg-blue-600 text-white">
+    <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="/" class="text-2xl font-bold">DemandeIA</a>
+                <a href="/" class="ml-4 hover:text-blue-200" id="presetsLink" style="display: none;">Préréglages</a>
+                <a href="/create" class="ml-4 hover:text-blue-200" id="createLink" style="display: none;">Créer un Préréglage</a>
+            </div>
+            <div class="flex items-center">
+                <span class="mr-4" id="welcomeMessage" style="display: none;">Bienvenue, <span id="username"></span></span>
+                <button id="logoutBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" style="display: none;">
+                    Déconnexion
+                </button>
+                <a href="/login" id="loginLink" class="mr-4 hover:text-blue-200" style="display: none;">Connexion</a>
+                <a href="/register" id="registerLink" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" style="display: none;">
+                    Inscription
+                </a>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<script>
+    function updateHeaderUI() {
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        const presetsLink = document.getElementById('presetsLink');
+        const createLink = document.getElementById('createLink');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const usernameSpan = document.getElementById('username');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const loginLink = document.getElementById('loginLink');
+        const registerLink = document.getElementById('registerLink');
+
+        if (token && username) {
+            presetsLink.style.display = 'inline';
+            createLink.style.display = 'inline';
+            welcomeMessage.style.display = 'inline';
+            usernameSpan.textContent = username;
+            logoutBtn.style.display = 'inline';
+            loginLink.style.display = 'none';
+            registerLink.style.display = 'none';
+        } else {
+            presetsLink.style.display = 'none';
+            createLink.style.display = 'none';
+            welcomeMessage.style.display = 'none';
+            logoutBtn.style.display = 'none';
+            loginLink.style.display = 'inline';
+            registerLink.style.display = 'inline';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', updateHeaderUI);
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        updateHeaderUI();
+        window.location.href = '/login';
+    });
+</script>

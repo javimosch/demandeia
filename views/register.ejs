@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - DemandeAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Inscription</h1>
+        <form id="registerForm" class="bg-white p-4 rounded shadow">
+            <input type="text" name="username" placeholder="Nom d'utilisateur" class="w-full p-2 border rounded mb-4">
+            <input type="password" name="password" placeholder="Mot de passe" class="w-full p-2 border rounded mb-4">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">S'inscrire</button>
+        </form>
+    </div>
+    <script>
+        document.getElementById('registerForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(formData))
+            });
+            const data = await response.json();
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                window.location.href = '/';
+            } else {
+                alert('Échec de l\'inscription');
+            }
+        };
+    </script>
+    <script>
+        // Configurer fetch pour inclure JWT
+        const originalFetch = window.fetch;
+        window.fetch = function() {
+            let args = arguments;
+            const token = localStorage.getItem('token');
+            if (token) {
+                if (args[1] && args[1].headers) {
+                    args[1].headers['Authorization'] = `Bearer ${token}`;
+                } else if (args[1]) {
+                    args[1].headers = { 'Authorization': `Bearer ${token}` };
+                } else {
+                    args[1] = { headers: { 'Authorization': `Bearer ${token}` } };
+                }
+            }
+            return originalFetch.apply(this, args);
+        };
+    
+        // Vérifier si l'utilisateur est connecté
+        const token = localStorage.getItem('token');
+        if (!token && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login';
+        }
+    </script>
+    
+</body>
+</html>

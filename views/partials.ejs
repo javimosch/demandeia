@@ -1,0 +1,44 @@
+<script>
+    // Configure fetch to include JWT
+    const originalFetch = window.fetch;
+    window.fetch = function() {
+        let args = Array.from(arguments);
+        const token = localStorage.getItem('token');
+        
+        if (typeof args[0] === 'string') {
+            // If the first argument is a string (URL), create an options object
+            args[1] = args[1] || {};
+        }
+        
+        if (args[1] && typeof args[1] === 'object') {
+            // Ensure headers object exists
+            args[1].headers = args[1].headers || {};
+            
+            // Set Content-Type to application/json by default
+            if (!args[1].headers['Content-Type']) {
+                args[1].headers['Content-Type'] = 'application/json';
+            }
+            
+            // Add Authorization header if token exists
+            if (token) {
+                args[1].headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+        
+        if (token) {
+            console.log('Token sent', args[1]);
+        } else {
+            console.log('No token found');
+        }
+        
+        return originalFetch.apply(this, args);
+    };
+    
+    
+
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+    }
+</script>

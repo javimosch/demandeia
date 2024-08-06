@@ -1,0 +1,9 @@
+*.json
+.vscode
+dist
+*.log
+logs
+logs/*.log
+.env
+node_modules
+deploy.json
